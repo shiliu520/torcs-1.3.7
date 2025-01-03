@@ -79,13 +79,18 @@ void SingleSensor::update()
 	printf ("\nTrack Segment End Width:          %f (meters)", car->_trkPos.seg->endWidth);
 	printf ("\nTrack Segment Length:             %f (meters)\n", car->_trkPos.seg->length);*/
 
-	switch (car->_trkPos.seg->type) 
+    int seg_type = car->_trkPos.seg->type;
+    seg_type = 0; // comment this line for normal road
+    switch (seg_type)
 	{
 		case 3: sensor_out = sensor_calc_str(car->_trkPos.seg, car->_trkPos.toLeft, car->_trkPos.toStart, -relative_sensor_angle, sensor_range);
 				break;
 		case 2:	sensor_out = sensor_calc_lft_rgt(car->_trkPos.seg, car->_trkPos.toLeft, car->_trkPos.toStart, -relative_sensor_angle, sensor_range);
 				break;
 		case 1:	sensor_out = sensor_calc_lft_rgt(car->_trkPos.seg, car->_trkPos.toLeft, car->_trkPos.toStart, -relative_sensor_angle, sensor_range);
+				break;
+		default:
+		        sensor_out = 7.5;
 				break;
 	}
 }

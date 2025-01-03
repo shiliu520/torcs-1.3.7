@@ -221,6 +221,7 @@ newrace(int index, tCarElt* car, tSituation *s)
     	printf("%s is not a recognized version",getVersion());
     	exit(0);
     }
+    printf("Version: %s, Sensor range: %f\n", getVersion(), __SENSORS_RANGE__);
 
     listenSocket[index] = socket(AF_INET, SOCK_DGRAM, 0);
     if (listenSocket[index] < 0)
