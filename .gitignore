@@ -36,7 +36,7 @@ runtime/
 runtimed/
 *.vcxproj
 *.vcxproj.filters
-!scr_server\scr_server.vcxproj
+!src\drivers\scr_server\scr_server.vcxproj
 _UpgradeReport_Files/
 *.suo
 *UpgradeLog*
