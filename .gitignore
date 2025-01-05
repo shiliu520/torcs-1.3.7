@@ -36,6 +36,7 @@ runtime/
 runtimed/
 *.vcxproj
 *.vcxproj.filters
+!scr_server\scr_server.vcxproj
 _UpgradeReport_Files/
 *.suo
 *UpgradeLog*
@@ -43,6 +44,7 @@ TORCS.sdf
 TORCS.opensdf
 Backup/
 **/Debug/
+**/Release/
 
 autom4te.cache
 scr_client/client
@@ -50,3 +52,4 @@ scr_client/client.exe
 data/tracks/road/open_space/*
 src/libs/txml/gennmtab/gennmtab
 src/linux/torcs-bin
+runtime

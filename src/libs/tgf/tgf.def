@@ -78,3 +78,5 @@ EXPORTS
 	setVersion
 	getVersion
 	setNoisy
+	getTimeout
+	getNoisy
