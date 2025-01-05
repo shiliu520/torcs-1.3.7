@@ -44,3 +44,10 @@ TORCS.sdf
 TORCS.opensdf
 Backup/
 **/Debug/
+
+autom4te.cache
+scr_client/client
+scr_client/client.exe
+data/tracks/road/open_space/*
+src/libs/txml/gennmtab/gennmtab
+src/linux/torcs-bin
