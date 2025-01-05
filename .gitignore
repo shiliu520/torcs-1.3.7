@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+
+export/
+runtime/
+runtimed/
+*.vcxproj
+*.vcxproj.filters
+_UpgradeReport_Files/
+*.suo
+UpgradeLog.htm
+UpgradeLog.XML
+TORCS.sdf
+TORCS.opensdf
+Backup/
+**/Debug/

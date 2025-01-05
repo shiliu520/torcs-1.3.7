@@ -23,7 +23,7 @@ $process_ = [PSCustomObject]@{
 }
 if ($matchResult) {
     $foundVersion = $matchResult.Matches.Groups[1].Value
-    Write-Host $foundVersion
+    Write-Host "当前解决方案版本: $foundVersion"
 
     # 这里假设Visual Studio 2022期望的格式版本是12.00
     $expectedVersion = $vs2012ExpectedVersion
