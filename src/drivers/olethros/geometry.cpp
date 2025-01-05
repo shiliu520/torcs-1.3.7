@@ -27,6 +27,9 @@
 #ifdef WIN32
 #include <float.h>
 #define isnan _isnan
+#else
+#include <cmath>
+#define isnan std::isnan
 #endif
 
 
