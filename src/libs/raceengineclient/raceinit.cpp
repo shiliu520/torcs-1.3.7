@@ -47,6 +47,35 @@
 
 #include "raceinit.h"
 
+#ifdef _WIN32
+char* strndup(const char* s, size_t n) {
+    size_t len = 0;
+
+    if (s == NULL) {
+        printf("strndup input pointer is null!\n");
+        return NULL;
+    }
+
+    while (s[len] != '\0' && len < n) {
+        len++;
+    }
+
+    char* result = (char*)malloc(len + 1);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    // errno_t err = strncpy_s(result, len + 1, s, len);
+    // if (err != 0) {
+    //     free(result);
+    //     return NULL;
+    // }
+	strncpy(result, s, len);
+
+    return result;
+}
+#endif
+
 static const char *level_str[] = { ROB_VAL_ROOKIE, ROB_VAL_AMATEUR, ROB_VAL_SEMI_PRO, ROB_VAL_PRO };
 
 static tModList *reEventModList = 0;

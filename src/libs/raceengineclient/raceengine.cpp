@@ -638,11 +638,28 @@ ReRaceRules(tCarElt *car)
 		}
 	}
 }
+
+#ifdef _WIN32
+    #ifdef _WIN64
+        // 当前是64位Windows系统
+        #define IS_WIN64 1
+    #else
+        // 当前是32位Windows系统
+        #define IS_WIN32 1
+    #endif
+#else
+    // 当前不是Windows系统
+    #define NOT_WIN32 1
+#endif
+
+#ifdef NOT_WIN32
+typedef unsigned char uint8_t;
 extern int* pwritten;
 extern uint8_t* pdata;
 extern int* ppause;
 extern int* pzmq_flag;
 extern int* psave_flag;
+#endif
 
 int count=0;
 
@@ -651,6 +668,7 @@ static void
 ReOneStep(double deltaTimeIncrement)
 {
 
+#ifdef NOT_WIN32
 	if (*ppause == 1) 
      { 
         count++;
@@ -667,6 +685,7 @@ ReOneStep(double deltaTimeIncrement)
                ReInfo->_reCurTime = t - RCM_MAX_DT_SIMU;
         }       
     }
+#endif
 
     int i;
 	tRobotItf *robot;
