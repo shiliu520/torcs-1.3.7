@@ -77,6 +77,7 @@ char* strndup(const char* s, size_t n) {
     //     return NULL;
     // }
 	strncpy(result, s, len);
+	result[len] = '\0';
 
     return result;
 }
