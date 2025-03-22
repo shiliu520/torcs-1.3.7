@@ -13,8 +13,10 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#define BUFSIZE 1000
 #include "SimpleDriver.h"
-
+#include "SimpleLogger.h"
+#define LOG(logger, level, message) logger.logMessage(level, __FILE__, __LINE__, message)
 
 /* Gear Changing Constants*/
 const int SimpleDriver::gearUp[6]=
@@ -57,6 +59,7 @@ const float SimpleDriver::clutchDec=0.01;
 const float SimpleDriver::clutchMaxModifier=1.3;
 const float SimpleDriver::clutchMaxTime=1.5;
 
+LogRecorder logger("TorcsOutput.log");
 
 int
 SimpleDriver::getGear(CarState &cs)
@@ -65,11 +68,11 @@ SimpleDriver::getGear(CarState &cs)
     int gear = cs.getGear();
     int rpm  = cs.getRpm();
 
-    // if gear is 0 (N) or -1 (R) just return 1 
+    // if gear is 0 (N) or -1 (R) just return 1
     if (gear<1)
         return 1;
-    // check if the RPM value of car is greater than the one suggested 
-    // to shift up the gear from the current one     
+    // check if the RPM value of car is greater than the one suggested
+    // to shift up the gear from the current one
     if (gear <6 && rpm >= gearUp[gear-1])
         return gear + 1;
     else
@@ -148,6 +151,22 @@ SimpleDriver::getAccel(CarState &cs)
 CarControl
 SimpleDriver::wDrive(CarState cs)
 {
+    float angle = cs.getAngle();
+    float trackPos = cs.getTrackPos();
+    char buffer[BUFSIZE];
+    int offset = 0;
+
+    offset += snprintf(buffer + offset, BUFSIZE - offset,
+            "angle: %f, trackPos: %f, ", angle, trackPos);
+    for (int i = 0; i < TRACK_SENSORS_NUM; i++)
+    {
+        offset += snprintf(buffer + + offset, BUFSIZE - offset,
+                (i < TRACK_SENSORS_NUM -1)?"track_%d: %f, ":"track_%d: %f", i,
+                cs.getTrack(i));
+    }
+
+    LOG(logger, LogLevel::INFO, buffer);
+
 	// check if car is currently stuck
 	if ( fabs(cs.getAngle()) > stuckAngle )
     {
