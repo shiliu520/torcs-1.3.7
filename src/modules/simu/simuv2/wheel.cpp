@@ -24,6 +24,22 @@ static const char *WheelSect[4] = {SECT_FRNTRGTWHEEL, SECT_FRNTLFTWHEEL, SECT_RE
 static const char *SuspSect[4] = {SECT_FRNTRGTSUSP, SECT_FRNTLFTSUSP, SECT_REARRGTSUSP, SECT_REARLFTSUSP};
 static const char *BrkSect[4] = {SECT_FRNTRGTBRAKE, SECT_FRNTLFTBRAKE, SECT_REARRGTBRAKE, SECT_REARLFTBRAKE};
 
+#define LOG_TIRE_LATERAL_FORCE (0)
+#if LOG_TIRE_LATERAL_FORCE
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+
+auto logger_tire = [](){
+    auto lg = spdlog::rotating_logger_mt("spdlog", "../../../../scr_client/TireOutput.log",
+                                      1024*1024*100, 1);
+    lg->set_pattern("%Y-%m-%d %H:%M:%S.%e %l <%@> %v");
+    return lg;
+}();  // 注意结尾的()立即执行
+
+#endif
+
+
 void SimWheelConfig(tCar *car, int index)
 {
 	void *hdle = car->params;
@@ -288,6 +304,10 @@ void SimWheelUpdateForce(tCar *car, int index)
 	car->carElt->_wheelSlipSide(index) = sy*v;
 	car->carElt->_wheelSlipAccel(index) = sx*v;
 	car->carElt->_reaction[index] = zforce;
+
+#if LOG_TIRE_LATERAL_FORCE
+    SPDLOG_LOGGER_INFO(logger_tire, "index: {}, Slip_Angle_rad: {}, Lateral_Force_N: {}", index, wheel->sa, Fn);
+#endif
 }
 
 
