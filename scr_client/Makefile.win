@@ -5,11 +5,12 @@ CPP  = g++.exe
 CC   = gcc.exe
 WINDRES = windres.exe
 RES  =
-OBJ  = CarState.o client.o SimpleDriver.o SimpleParser.o WrapperBaseDriver.o CarControl.o $(RES)
-LINKOBJ  = CarState.o client.o SimpleDriver.o SimpleParser.o WrapperBaseDriver.o CarControl.o $(RES)
+OBJ  = CarState.o client.o SimpleDriver.o SimpleParser.o WrapperBaseDriver.o CarControl.o SimpleLogger.o $(RES)
+LINKOBJ  = CarState.o client.o SimpleDriver.o SimpleParser.o WrapperBaseDriver.o CarControl.o SimpleLogger.o $(RES)
 LINKFLAGS=-lWS2_32
 # LIBS =  -L"C:/Programmi/Dev-Cpp/lib" WS2_32.Lib
 # INCS =  -I"C:/Programmi/Dev-Cpp/include"
+CXXINCS = -I"%VCPKG_ROOT%/installed/x64-windows/include/eigen3"
 BIN  = client.exe
 CXXFLAGS = $(CXXINCS)   -Wall
 CFLAGS = $(INCS)   -Wall
@@ -43,3 +44,6 @@ WrapperBaseDriver.o: WrapperBaseDriver.cpp
 
 CarControl.o: CarControl.cpp
 	$(CPP) -c CarControl.cpp -o CarControl.o $(CXXFLAGS)
+
+SimpleLogger.o: SimpleLogger.cpp
+	$(CPP) -c SimpleLogger.cpp -o SimpleLogger.o $(CXXFLAGS)

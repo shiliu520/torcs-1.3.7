@@ -80,7 +80,7 @@ void SingleSensor::update()
 	printf ("\nTrack Segment Length:             %f (meters)\n", car->_trkPos.seg->length);*/
 
     int seg_type = car->_trkPos.seg->type;
-    seg_type = 0; // comment this line for normal road
+    // seg_type = 0; // comment this line for normal road
     switch (seg_type)
 	{
 		case 3: sensor_out = sensor_calc_str(car->_trkPos.seg, car->_trkPos.toLeft, car->_trkPos.toStart, -relative_sensor_angle, sensor_range);
