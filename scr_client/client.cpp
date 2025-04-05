@@ -35,7 +35,7 @@
 
 /*** defines for UDP *****/
 #define UDP_MSGLEN 1000
-#define UDP_CLIENT_TIMEUOT 1000000
+#define UDP_CLIENT_TIMEUOT 1000000000
 //#define __UDP_CLIENT_VERBOSE__
 /************************/
 
@@ -256,23 +256,23 @@ int main(int argc, char *argv[])
                  * Compute The Action to send to the solorace sever
                  **************************************************/
 
-		if ( (++currentStep) != maxSteps)
-		{
-                	string action = d.drive(string(buf));
-                	memset(buf, 0x0, UDP_MSGLEN);
-			sprintf(buf,"%s",action.c_str());
-		}
-		else
-			sprintf (buf, "(meta 1)");
-
-                if (sendto(socketDescriptor, buf, strlen(buf)+1, 0,
-                           (struct sockaddr *) &serverAddress,
-                           sizeof(serverAddress)) < 0)
+                if ( (++currentStep) != maxSteps)
                 {
-                    cerr << "cannot send data ";
-                    CLOSE(socketDescriptor);
-                    exit(1);
+                    string action = d.drive(string(buf));
+                    memset(buf, 0x0, UDP_MSGLEN);
+                    sprintf(buf,"%s",action.c_str());
                 }
+                else
+                    sprintf (buf, "(meta 1)");
+
+                        if (sendto(socketDescriptor, buf, strlen(buf)+1, 0,
+                                (struct sockaddr *) &serverAddress,
+                                sizeof(serverAddress)) < 0)
+                        {
+                            cerr << "cannot send data ";
+                            CLOSE(socketDescriptor);
+                            exit(1);
+                        }
 #ifdef __UDP_CLIENT_VERBOSE__
                 else
                     cout << "Sending " << buf << endl;

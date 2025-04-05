@@ -37,6 +37,12 @@ CarState::CarState(string sensors)
         SimpleParser::parse(sensors, "trackPos", this->trackPos);
         SimpleParser::parse(sensors, "wheelSpinVel", this->wheelSpinVel, 4);
         SimpleParser::parse(sensors, "z", this->z);
+        SimpleParser::parse(sensors, "yaw_rate", this->yaw_rate);
+        SimpleParser::parse(sensors, "x", this->x);
+        SimpleParser::parse(sensors, "y", this->y);
+        SimpleParser::parse(sensors, "speedGlobalX", this->SpeedGlobalX);
+        SimpleParser::parse(sensors, "speedGlobalY", this->SpeedGlobalY);
+        SimpleParser::parse(sensors, "yaw", this->yaw);
 }
 
 string
@@ -62,9 +68,15 @@ CarState::toString()
 	str += SimpleParser::stringify("trackPos", this->trackPos);
 	str += SimpleParser::stringify("wheelSpinVel", this->wheelSpinVel, 4);
 	str += SimpleParser::stringify("z", this->z);
-	
+        str += SimpleParser::stringify("yaw_rate", this->yaw_rate);
+        str += SimpleParser::stringify("x", this->x);
+        str += SimpleParser::stringify("y", this->y);
+        str += SimpleParser::stringify("speedGlobalX", this->SpeedGlobalX);
+        str += SimpleParser::stringify("speedGlobalY", this->SpeedGlobalY);
+        str += SimpleParser::stringify("yaw", this->yaw);
+
 	return str;
-	        
+
 }
 
 float 
@@ -305,4 +317,40 @@ void
 CarState::setZ(float z)
 {
     this->z = z;
+};
+
+float
+CarState::getYawRate()
+{
+    return yaw_rate;
+};
+
+float
+CarState::getX()
+{
+    return x;
+};
+
+float
+CarState::getY()
+{
+    return y;
+};
+
+float
+CarState::getSpeedGlobalX()
+{
+    return SpeedGlobalX;
+};
+
+float
+CarState::getSpeedGlobalY()
+{
+    return SpeedGlobalY;
+};
+
+float
+CarState::getYaw()
+{
+    return yaw;
 };

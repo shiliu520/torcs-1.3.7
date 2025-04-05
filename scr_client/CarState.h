@@ -51,7 +51,12 @@ private:
         float trackPos;
         float wheelSpinVel[4];
         float z;
-        
+        float yaw_rate;
+        float x;
+        float y;
+        float SpeedGlobalX;
+        float SpeedGlobalY;
+        float yaw;
 
 public:
 	
@@ -139,7 +144,17 @@ public:
 
         void setZ(float z);
 
+        float getYawRate();
 
+        float getX();
+
+        float getY();
+
+        float getSpeedGlobalX();
+
+        float getSpeedGlobalY();
+
+        float getYaw();
 };
 
 #endif /*CARSTATE_H_*/

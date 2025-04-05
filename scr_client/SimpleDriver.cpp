@@ -16,6 +16,10 @@
 #define BUFSIZE 1000
 #include "SimpleDriver.h"
 #include "SimpleLogger.h"
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <Eigen/Dense>
 #define LOG(logger, level, message) logger.logMessage(level, __FILE__, __LINE__, message)
 
 /* Gear Changing Constants*/
@@ -140,13 +144,88 @@ SimpleDriver::getAccel(CarState &cs)
 
         }
 
+        float acc_cmd = 2/(1+exp(cs.getSpeedX() - targetSpeed)) - 1;
+        if (acc_cmd < 0 && acc_cmd >= -0.2) acc_cmd = 0.0;
+        std::ostringstream oss;
+        oss << "targetSpeed: " << targetSpeed << ", currentSpeed: " << cs.getSpeedX() << ", acc: " << acc_cmd;
+        LOG(logger, LogLevel::INFO, oss.str().c_str());
+
         // accel/brake command is expontially scaled w.r.t. the difference between target speed and current one
-        return 2/(1+exp(cs.getSpeedX() - targetSpeed)) - 1;
+        return acc_cmd;
     }
     else
         return 0.3; // when out of track returns a moderate acceleration command
 
 }
+
+// 函数用于找到向量中最大值对应的索引
+template<typename T>
+int findMaxIndex(const std::vector<T>& data) {
+    if (data.empty()) {
+        return -1; // 如果向量为空，返回 -1
+    }
+    auto maxIt = std::max_element(data.begin(), data.end());
+    return std::distance(data.begin(), maxIt);
+}
+
+// 生成从 start 到 end-1 的索引序列
+std::vector<int> arange(int start, int end) {
+    std::vector<int> result;
+    for (int i = start; i < end; ++i) {
+        result.push_back(i);
+    }
+    return result;
+}
+
+// 多项式拟合函数
+std::vector<float> fit_polynomial(const std::vector<float>& x, const std::vector<float>y, int degree) {
+    int n = x.size();
+    Eigen::MatrixXd A(n, degree + 1);
+    Eigen::VectorXd b(n);
+
+    // 构建矩阵 A 和向量 b
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= degree; ++j) {
+            A(i, j) = std::pow(x[i], j);
+        }
+        b(i) = y[i];
+    }
+
+    // 使用最小二乘法求解多项式系数
+    Eigen::VectorXd coeffs = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+
+    std::vector<float> result;
+    for (int i = 0; i <= degree; ++i) {
+        result.push_back(coeffs(i));
+    }
+    return result;
+}
+
+// 计算拟合多项式在指定点的值
+std::vector<float> evaluate_polynomial(const std::vector<float>& coeffs, const std::vector<float>& x_fit_dense) {
+    std::vector<float> result;
+    for (float x : x_fit_dense) {
+        float y = 0.0;
+        int degree = coeffs.size() - 1;
+        for (int i = degree; i >= 0; --i) {
+            y = y * x + coeffs[i];
+        }
+        result.push_back(y);
+    }
+    return result;
+}
+
+// 计算两个向量对应元素的均值
+std::vector<float> compute_average(const std::vector<float>& left, const std::vector<float>& right) {
+    std::vector<float> average;
+    size_t size = std::min(left.size(), right.size());
+    for (size_t i = 0; i < size; ++i) {
+        average.push_back((left[i] + right[i]) / 2.0);
+    }
+    return average;
+}
+
+
 
 CarControl
 SimpleDriver::wDrive(CarState cs)
@@ -154,7 +233,13 @@ SimpleDriver::wDrive(CarState cs)
     float angle = cs.getAngle();
     float trackPos = cs.getTrackPos();
     char buffer[BUFSIZE];
-    int offset = 0;
+    int offset = 0, max_index = 0;
+    static float track_angle[] = {90, 75, 60, 45, 30, 20, 15, 10, 5, 0, -5, -10, -15, -20, -30, -45, -60, -75, -90};
+    float bound_x[TRACK_SENSORS_NUM], bound_y[TRACK_SENSORS_NUM];
+    std::vector<float> track_data;
+    std::vector<int> left_indices;
+    std::vector<int> right_indices;
+    static float steer_prev = 0.0;
 
     offset += snprintf(buffer + offset, BUFSIZE - offset,
             "angle: %f, trackPos: %f, ", angle, trackPos);
@@ -163,8 +248,77 @@ SimpleDriver::wDrive(CarState cs)
         offset += snprintf(buffer + + offset, BUFSIZE - offset,
                 (i < TRACK_SENSORS_NUM -1)?"track_%d: %f, ":"track_%d: %f", i,
                 cs.getTrack(i));
+        bound_x[i] = cs.getTrack(i) * cos(track_angle[i] * PI / 180);
+        bound_y[i] = cs.getTrack(i) * sin(track_angle[i] * PI / 180);
+        track_data.push_back(cs.getTrack(i));
+    }
+    LOG(logger, LogLevel::INFO, buffer);
+
+    max_index = findMaxIndex(track_data);
+    if (max_index != -1) {
+        // 生成左索引序列
+        left_indices = arange(0, max_index);
+        // 生成右索引序列
+        right_indices = arange(max_index + 1, static_cast<int>(track_data.size()));
+    }
+    // 预先确定向量大小
+    std::vector<float> x_bound_left(left_indices.size());
+    std::vector<float> y_bound_left(left_indices.size());
+    std::vector<float> x_bound_right(right_indices.size());
+    std::vector<float> y_bound_right(right_indices.size());
+
+    // 提取左边界数据
+    for (size_t i = 0; i < left_indices.size(); ++i) {
+        int index = left_indices[i];
+        x_bound_left[i] = bound_x[index];
+        y_bound_left[i] = bound_y[index];
     }
 
+    // 提取右边界数据
+    for (size_t i = 0; i < right_indices.size(); ++i) {
+        int index = right_indices[i];
+        x_bound_right[i] = bound_x[index];
+        y_bound_right[i] = bound_y[index];
+    }
+
+    std::vector<float> coeffs_left = fit_polynomial(x_bound_left, y_bound_left, 3);
+    std::vector<float> coeffs_right = fit_polynomial(x_bound_right, y_bound_right, 3);
+    std::vector<float> x_fit_dense;
+    for (int i = 0; i <= 350; i += 1) {
+        float value = static_cast<float>(i) / 10.0;
+        x_fit_dense.push_back(value);
+    }
+
+    std::vector<float> y_fit_dense_left = evaluate_polynomial(coeffs_left, x_fit_dense);
+    std::vector<float> y_fit_dense_right = evaluate_polynomial(coeffs_right, x_fit_dense);
+    std::vector<float> y_fit_dense_center = compute_average(y_fit_dense_left, y_fit_dense_right);
+
+    std::ostringstream oss;
+# define DEBUG_CENTER_LINE_FIT (0)
+# if DEBUG_CENTER_LINE_FIT
+    for (size_t i = 0; i < 7; i++)
+    {
+        if (i > 0)
+        {
+            oss << ", ";
+        }
+        else
+        {
+            oss << "y_fit_dense_right: ";
+        }
+
+        oss << y_fit_dense_right[i];
+    }
+    std::strcpy(buffer, oss.str().c_str());
+#endif
+#undef DEBUG_CENTER_LINE_FIT
+    oss << "vx: " << cs.getSpeedX() / 3.6 << ", delta: " << steer_prev;
+    oss << ", vy: " << cs.getSpeedY() / 3.6  << ", yaw_rate: " << cs.getYawRate();
+    oss << ", x: " << cs.getX() << ", y: " << cs.getY() << ", theta: ";
+    oss << std::atan2(cs.getSpeedGlobalY(), cs.getSpeedGlobalX());
+    oss << ", fuel: " << cs.getFuel();
+    oss << ", yaw: " << cs.getYaw();
+    std::strcpy(buffer, oss.str().c_str());
     LOG(logger, LogLevel::INFO, buffer);
 
 	// check if car is currently stuck
@@ -239,6 +393,7 @@ SimpleDriver::wDrive(CarState cs)
 
         // build a CarControl variable and return it
         CarControl cc(accel,brake,gear,steer,clutch);
+        steer_prev = steer * steerLock;
         return cc;
     }
 }

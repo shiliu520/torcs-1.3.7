@@ -1,5 +1,7 @@
 CC            =  g++
-CPPFLAGS      = -Wall -g 
+CPPFLAGS      = -Wall -g -fsanitize=address -I /usr/include/eigen3/
+
+# 目标文件
 
 # Uncomment the following line for a verbose client
 #CPPFLAGS      = -Wall -g -D __UDP_CLIENT_VERBOSE__
@@ -12,7 +14,7 @@ DRIVER_OBJ = $(DRIVER_CLASS).o
 
 EXTFLAGS = -D __DRIVER_CLASS__=$(DRIVER_CLASS) -D __DRIVER_INCLUDE__=$(DRIVER_INCLUDE)
 
-OBJECTS = WrapperBaseDriver.o SimpleParser.o CarState.o CarControl.o $(DRIVER_OBJ)
+OBJECTS = WrapperBaseDriver.o SimpleParser.o CarState.o CarControl.o $(DRIVER_OBJ) SimpleLogger.o
 
 all: $(OBJECTS) client
 

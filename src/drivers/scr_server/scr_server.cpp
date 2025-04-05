@@ -506,6 +506,7 @@ drive(int index, tCarElt* car, tSituation *s)
     stateString += SimpleParser::stringify("yaw", car->_yaw);
     stateString += SimpleParser::stringify("speedGlobalX", car->_speed_X);
     stateString += SimpleParser::stringify("speedGlobalY", car->_speed_Y);
+    stateString += SimpleParser::stringify("yaw_rate", car->_yaw_rate);
 
 
 
