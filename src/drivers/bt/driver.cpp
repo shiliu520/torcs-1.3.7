@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include "driver.h"
+#include <algorithm>
 
 const float Driver::MAX_UNSTUCK_ANGLE = 15.0f/180.0f*PI;	// [radians] If the angle of the car on the track is smaller, we assume we are not stuck.
 const float Driver::UNSTUCK_TIME_LIMIT = 2.0f;				// [s] We try to get unstuck after this time.
@@ -41,7 +42,7 @@ const float Driver::OVERTAKE_OFFSET_SPEED = 5.0f;			// [m/s] Offset change speed
 const float Driver::PIT_LOOKAHEAD = 6.0f;					// [m] Lookahead to stop in the pit.
 const float Driver::PIT_BRAKE_AHEAD = 200.0f;				// [m] Workaround for "broken" pitentries.
 const float Driver::PIT_MU = 0.4f;							// [-] Friction of pit concrete.
-const float Driver::MAX_SPEED = 84.0f;						// [m/s] Speed to compute the percentage of brake to apply.
+const float Driver::MAX_SPEED = 10.0f;						// [m/s] Speed to compute the percentage of brake to apply.
 const float Driver::MAX_FUEL_PER_METER = 0.0008f;			// [liter/m] fuel consumtion.
 const float Driver::CLUTCH_SPEED = 5.0f;					// [m/s]
 const float Driver::CENTERDIV = 0.1f;						// [-] (factor) [0.01..0.6].
@@ -185,13 +186,27 @@ void Driver::drive(tSituation *s)
 	} else {
 		car->_steerCmd = filterSColl(getSteer());
 		car->_gearCmd = getGear();
-		car->_brakeCmd = filterABS(filterBrakeSpeed(filterBColl(filterBPit(getBrake()))));
-		if (car->_brakeCmd == 0.0f) {
-			car->_accelCmd = filterTCL(filterTrk(filterOverlap(getAccel())));
+		// car->_brakeCmd = filterABS(filterBrakeSpeed(filterBColl(filterBPit(getBrake()))));
+		// if (car->_brakeCmd == 0.0f) {
+		// 	car->_accelCmd = filterTCL(filterTrk(filterOverlap(getAccel())));
+		// } else {
+		// 	car->_accelCmd = 0.0f;
+  		// }
+		float accel_and_brake = getLongAccel();
+		if (accel_and_brake >= 0.0f) {
+			car->_accelCmd = filterTCL(filterTrk(filterOverlap(accel_and_brake)));
+			car->_brakeCmd = 0.0f;
 		} else {
 			car->_accelCmd = 0.0f;
+			car->_brakeCmd = filterABS(filterBrakeSpeed(filterBColl(filterBPit(-accel_and_brake))));
   		}
 		car->_clutchCmd = getClutch();
+		printf("time: %f, accel: %f, brake: %f, gear: %d, steer: %f\n",
+		        s->currentTime, car->_accelCmd, car->_brakeCmd, car->_gearCmd, car->_steerCmd);
+        printf("time: %f, vx: %f, delta: %f, vy: %f, yaw_rate: %f, x: %f, y: %f, "
+		       "theta: %f, fuel: %f, yaw: %f\n", s->currentTime, car->_speed_x, car->_steerCmd * car->_steerLock,
+			   car->_speed_y, car->_yaw_rate, car->_pos_X, car->_pos_Y, std::atan2(car->_speed_Y, car->_speed_X), car->_fuel,
+		       car->_yaw);
 
 	}
 }
@@ -294,16 +309,30 @@ float Driver::getAccel()
 {
 	if (car->_gear > 0) {
 		float allowedspeed = getAllowedSpeed(car->_trkPos.seg);
+		allowedspeed = std::min(allowedspeed, MAX_SPEED);
 		if (allowedspeed > car->_speed_x + FULL_ACCEL_MARGIN) {
+			// printf("targetSpeed: %f, currentSpeed: %f, acc: %f\n", allowedspeed, car->_speed_x, 1.0);
 			return 1.0;
 		} else {
 			float gr = car->_gearRatio[car->_gear + car->_gearOffset];
 			float rm = car->_enginerpmRedLine;
+			// printf("targetSpeed: %f, currentSpeed: %f, acc: %f\n", allowedspeed, car->_speed_x, allowedspeed/car->_wheelRadius(REAR_RGT)*gr /rm);
 			return allowedspeed/car->_wheelRadius(REAR_RGT)*gr /rm;
 		}
 	} else {
 		return 1.0;
 	}
+}
+
+float Driver::getLongAccel()
+{
+	float allowedspeed = getAllowedSpeed(car->_trkPos.seg);
+	float targetSpeed = std::min(allowedspeed, MAX_SPEED);
+	float acc_cmd = 2/(1+exp(car->_speed_x - targetSpeed)) - 1;
+	if (acc_cmd < 0 && acc_cmd >= -0.2) acc_cmd = 0.0;
+	if (acc_cmd >= 0 && acc_cmd <= 0.1) acc_cmd = 0.07;
+	printf("targetSpeed: %f, currentSpeed: %f, acc: %f\n", targetSpeed, car->_speed_x, acc_cmd);
+	return acc_cmd;
 }
 
 
@@ -335,6 +364,7 @@ float Driver::getBrake()
 		float lookaheaddist = getDistToSegEnd();
 
 		float allowedspeed = getAllowedSpeed(segptr);
+		allowedspeed = std::min(allowedspeed, MAX_SPEED);
 		if (allowedspeed < car->_speed_x) {
 			return MIN(1.0f, (car->_speed_x-allowedspeed)/(FULL_ACCEL_MARGIN));
 		}

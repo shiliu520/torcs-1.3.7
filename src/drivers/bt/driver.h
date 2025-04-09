@@ -76,6 +76,7 @@ class Driver {
 		void update(tSituation *s);
 		float getAllowedSpeed(tTrackSeg *segment);
 		float getAccel();
+		float getLongAccel();
 		float getDistToSegEnd();
 		float getBrake();
 		int getGear();

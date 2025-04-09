@@ -32,7 +32,7 @@ static const char *BrkSect[4] = {SECT_FRNTRGTBRAKE, SECT_FRNTLFTBRAKE, SECT_REAR
 
 auto logger_tire = [](){
     auto lg = spdlog::rotating_logger_mt("spdlog", "../../../../scr_client/TireOutput.log",
-                                      1024*1024*100, 1);
+                                      1024*1024*1000, 1);
     lg->set_pattern("%Y-%m-%d %H:%M:%S.%e %l <%@> %v");
     return lg;
 }();  // 注意结尾的()立即执行
